@@ -2,9 +2,10 @@ import { normalize } from 'node:path';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
 import { type Schema } from '@jsforce/jsforce-node';
-import { formatFile, writeFile } from '../../impl/common/fies.js';
+import { writeFile } from '../../impl/common/fies.js';
 import { generateTypes } from '../../impl/types/generator.js';
 import { getAllSobjects } from '../../impl/common/salesforce.js';
+import { wildTest } from '../../impl/common/strings.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('hacerx-dx', 'hacerx.types');
@@ -35,14 +36,28 @@ export default class Types extends SfCommand<HacerxTypesResult> {
       summary: messages.getMessage('flags.output-dir.summary'),
       default: './output',
     }),
+    'case-insensitive': Flags.boolean({
+      summary: messages.getMessage('flags.case-insensitive.summary'),
+      description: messages.getMessage('flags.case-insensitive.description'),
+      default: false,
+    }),
     'target-org': Flags.requiredOrg(),
   };
 
   public async run(): Promise<HacerxTypesResult> {
     const { flags } = await this.parse(Types);
     const conn = flags['target-org'].getConnection(flags['api-version']);
-    const allSObjects = await getAllSobjects(conn);
-    const checkSObjects = flags.sobject ? flags.sobject : allSObjects;
+    const wildcards = flags.sobject?.filter((sobject) => sobject.includes('*') || sobject.includes('.')) || [];
+    let allSObjects: string[] = [];
+    let checkSObjects: string[] = [];
+    if (wildcards.length > 0 || flags.sobject?.length === 0) {
+      allSObjects = await getAllSobjects(conn);
+      checkSObjects = allSObjects.filter((sobject) =>
+        wildcards.some((wildcard) => wildTest(wildcard, sobject, flags['case-insensitive']))
+      );
+    } else {
+      checkSObjects = flags.sobject ? flags.sobject : allSObjects;
+    }
 
     await Promise.all(checkSObjects.map((sobject) => this.generateFile(conn, sobject, flags['output-dir'])));
 
@@ -58,8 +73,8 @@ export default class Types extends SfCommand<HacerxTypesResult> {
     this.log(`Processing ${sobject}`);
     const description = await conn.describe(sobject);
     const typed = generateTypes(description);
-
-    await writeFile(normalize(`${outputDir}/${description.name}.d.ts`), formatFile(typed));
-    this.log(`Processed ${sobject} - ${outputDir}/${sobject}.d.ts`);
+    const outputFile = normalize(`${outputDir}/${description.name}.d.ts`);
+    await writeFile(outputFile, typed);
+    this.log(`Processed ${sobject} - ${outputFile}`);
   }
 }

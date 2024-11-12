@@ -13,6 +13,6 @@ export async function writeFile(...params: Parameters<typeof fsWriteFile>): Prom
   return fsWriteFile(...params);
 }
 
-export function formatFile(content: string): string {
+export function format(content: string): string {
   return prettier.format(content, { parser: 'typescript' });
 }
