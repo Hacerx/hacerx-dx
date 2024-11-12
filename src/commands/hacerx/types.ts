@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
-import { normalize } from 'node:path';
+// import { normalize } from 'node:path';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
 import { type Schema } from '@jsforce/jsforce-node';
-import { writeFile } from '../../../src/lib/common/fies.js';
+// import { writeFile } from '../../../src/lib/common/fies.js';
 import { generateTypes } from '../../../src/lib/types/generator.js';
 import { getAllSobjects } from '../../../src/lib/common/salesforce.js';
 
@@ -59,6 +59,8 @@ export default class Types extends SfCommand<HacerxTypesResult> {
     this.log(`Processing ${sobject}`);
     const description = await conn.describe(sobject);
     const typed = generateTypes(description);
-    await writeFile(normalize(`${outputDir}/${description.name}.d.ts`), typed);
+    this.log(typed);
+    // await writeFile(normalize(`${outputDir}/${description.name}.d.ts`), typed);
+    this.log(`Processed ${sobject} - ${outputDir}/${sobject}.d.ts`);
   }
 }
