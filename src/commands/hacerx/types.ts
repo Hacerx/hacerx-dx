@@ -34,7 +34,7 @@ export default class Types extends SfCommand<HacerxTypesResult> {
     }),
     'output-dir': Flags.directory({
       summary: messages.getMessage('flags.output-dir.summary'),
-      default: './output',
+      default: './types',
     }),
     'case-insensitive': Flags.boolean({
       summary: messages.getMessage('flags.case-insensitive.summary'),
