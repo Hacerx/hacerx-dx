@@ -186,7 +186,7 @@ function generateChildRelations(object: DescribeSObjectResult): { childrenDef: s
      * @cascadeDelete - ${child.cascadeDelete}
      * @restrictedDelete - ${child.restrictedDelete}
      **/
-    ${child.relationshipName}?: ${childType}[];\n`;
+    ${child.relationshipName}?: Partial<${childType}>[];\n`;
     }
   });
 
