@@ -5,6 +5,7 @@ module.exports = {
     header: 'off',
     '@typescript-eslint/prefer-nullish-coalescing': 'off',
     indent: ['error', 2, { SwitchCase: 1 }],
+    semi: ['error', 'always'],
   },
   ignorePatterns: ['.eslintrc.cjs'],
 };
