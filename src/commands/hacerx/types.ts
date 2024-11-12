@@ -10,10 +10,7 @@ import { wildTest } from '../../impl/common/strings.js';
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('hacerx-dx', 'hacerx.types');
 
-export type HacerxTypesResult = {
-  sobject: string;
-  time: string;
-};
+export type HacerxTypesResult = Record<string, string>;
 
 export default class Types extends SfCommand<HacerxTypesResult> {
   public static readonly summary = messages.getMessage('summary');
@@ -59,22 +56,24 @@ export default class Types extends SfCommand<HacerxTypesResult> {
       checkSObjects = flags.sobject ? flags.sobject : allSObjects;
     }
 
-    await Promise.all(checkSObjects.map((sobject) => this.generateFile(conn, sobject, flags['output-dir'])));
+    const result = await Promise.all(
+      checkSObjects.map((sobject) => this.generateFile(conn, sobject, flags['output-dir']))
+    );
 
-    const time = new Date().toDateString();
-
-    return {
-      sobject: checkSObjects.join(','),
-      time,
-    };
+    return result.reduce((acc, { sobject, type }) => ({ ...acc, [sobject]: type }), {});
   }
 
-  private async generateFile(conn: Connection<Schema>, sobject: string, outputDir: string): Promise<void> {
+  private async generateFile(
+    conn: Connection<Schema>,
+    sobject: string,
+    outputDir: string
+  ): Promise<{ sobject: string; type: string }> {
     this.log(`Processing ${sobject}`);
     const description = await conn.describe(sobject);
     const typed = generateTypes(description);
     const outputFile = normalize(`${outputDir}/${description.name}.d.ts`);
     await writeFile(outputFile, typed);
     this.log(`Processed ${sobject} - ${outputFile}`);
+    return { sobject, type: typed };
   }
 }
