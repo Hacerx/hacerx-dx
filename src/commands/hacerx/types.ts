@@ -1,11 +1,10 @@
-/* eslint-disable no-await-in-loop */
-// import { normalize } from 'node:path';
+import { normalize } from 'node:path';
 import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Connection, Messages } from '@salesforce/core';
 import { type Schema } from '@jsforce/jsforce-node';
-// import { writeFile } from '../../../src/lib/common/fies.js';
-import { generateTypes } from '../../../src/lib/types/generator.js';
-import { getAllSobjects } from '../../../src/lib/common/salesforce.js';
+import { formatFile, writeFile } from '../../impl/common/fies.js';
+import { generateTypes } from '../../impl/types/generator.js';
+import { getAllSobjects } from '../../impl/common/salesforce.js';
 
 Messages.importMessagesDirectoryFromMetaUrl(import.meta.url);
 const messages = Messages.loadMessages('hacerx-dx', 'hacerx.types');
@@ -59,8 +58,8 @@ export default class Types extends SfCommand<HacerxTypesResult> {
     this.log(`Processing ${sobject}`);
     const description = await conn.describe(sobject);
     const typed = generateTypes(description);
-    this.log(typed);
-    // await writeFile(normalize(`${outputDir}/${description.name}.d.ts`), typed);
+
+    await writeFile(normalize(`${outputDir}/${description.name}.d.ts`), formatFile(typed));
     this.log(`Processed ${sobject} - ${outputDir}/${sobject}.d.ts`);
   }
 }
