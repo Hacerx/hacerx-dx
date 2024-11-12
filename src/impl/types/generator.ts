@@ -1,7 +1,14 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { DescribeSObjectResult, Field } from '@jsforce/jsforce-node';
 import { PicklistResult, PicklistValueSchema } from '../../types/common.js';
+import { format } from '../common/fies.js';
 
+/**
+ * Generate typescript definition for a sObject
+ *
+ * @param sObjectDef - sObject definition from describeSObject
+ * @returns typescript definition for the sObject
+ */
 export function generateTypes(sObjectDef: DescribeSObjectResult): string {
   const fields = sObjectDef.fields;
 
@@ -9,7 +16,7 @@ export function generateTypes(sObjectDef: DescribeSObjectResult): string {
 
   const relations = generateChildRelations(sObjectDef);
 
-  let tsContent = `${picklistTypes.typeDefs.join('\n')}\n\ntype ${sObjectDef.name} = {\n`;
+  let tsContent = `type ${sObjectDef.name} = {\n`;
   //     let tsContent = `
   //   import { SObject } from './BaseTypes';
   //   ${relations.imports}
@@ -44,9 +51,18 @@ export function generateTypes(sObjectDef: DescribeSObjectResult): string {
   // close object
   tsContent += '} \n';
 
+  tsContent = `${picklistTypes.typeDefs.join('\n')}\n\n${format(tsContent)}`;
+
   return tsContent.trim();
 }
 
+/**
+ * Builds a typescript string literal union type for a picklist field based on it's picklist values
+ * The union type only includes active picklist values and is sorted alphabetically
+ *
+ * @param field - The field metadata
+ * @returns A string literal union type for the picklist field
+ */
 function buildPicklist(field: Field): string {
   if (field.picklistValues) {
     const active = (field.picklistValues as PicklistValueSchema[])
@@ -57,6 +73,22 @@ function buildPicklist(field: Field): string {
   return '';
 }
 
+/**
+ * Builds typescript type definitions for all picklist fields of a given object
+ *
+ * The function takes an object name and an array of field metadata as input and
+ * returns an object containing two properties: typeDefs and typeNames.
+ * typeDefs is an array of string literal union types for each picklist field.
+ * The string literal union type is sorted alphabetically and only contains active picklist values.
+ * typeNames is a map where the keys are the names of the picklist fields and the values are the
+ * corresponding type names.
+ *
+ * Note that the type names are generated as follows: <object name>_<field name>_Picklist
+ *
+ * @param objName - The name of the object
+ * @param field - The field metadata of the object
+ * @returns An object containing the picklist type definitions and type names
+ */
 function getPicklistTypes(objName: string, field: Field[]): PicklistResult {
   const picklistTypes: PicklistResult = {
     typeDefs: [],
@@ -75,6 +107,30 @@ function getPicklistTypes(objName: string, field: Field[]): PicklistResult {
   return picklistTypes;
 }
 
+/**
+ * Generates additional field information as a comment for the typescript definition of the field
+ *
+ * The function takes a Field object as input and returns a string containing a comment
+ * that includes the following information about the field:
+ *
+ * - label
+ * - type
+ * - nillable
+ * - createable
+ * - updateable
+ * - inlineHelpText (if available)
+ * - calculatedFormula (if available)
+ * - referenceTo (if available)
+ * - relationshipName (if available)
+ * - unique (if true)
+ * - autoNumber (if true)
+ *
+ * The comment is formatted as a typescript docstring and is meant to be used in the
+ * typescript definition of the field.
+ *
+ * @param field - The Field object to generate additional information about
+ * @returns A string containing the additional field information as a comment
+ */
 function additionalFieldInfo(field: Field): string {
   let moreInfo = '';
   const moreInfoPrefix = '\n* ';
@@ -100,6 +156,17 @@ function additionalFieldInfo(field: Field): string {
   return cmt;
 }
 
+/**
+ * Generate typescript definition for child relationships
+ *
+ * @param object - The DescribeSObjectResult to generate child relationships for
+ * @returns An object containing the typescript definition for the child relationships and any necessary imports
+ * @example
+ * {
+ * childrenDef: '/* typescript definition for child relationships * /',
+ * imports: '/* imports required for child relationships * /'
+ * }
+ */
 function generateChildRelations(object: DescribeSObjectResult): { childrenDef: string; imports: string } {
   let childrenDef = '\n// Child relationships\n';
   const imports = '';
@@ -126,6 +193,12 @@ function generateChildRelations(object: DescribeSObjectResult): { childrenDef: s
   return { childrenDef, imports };
 }
 
+/**
+ * Maps a Salesforce field type to a TypeScript type
+ *
+ * @param salesforceType - The Salesforce field type to map
+ * @returns The corresponding TypeScript type
+ */
 export function mapFieldType(salesforceType: string): string {
   switch (salesforceType) {
     case 'picklist':
