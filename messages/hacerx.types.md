@@ -44,6 +44,14 @@ Case insensitive SObject names
 
 Use this flag to ignore the case of SObject names
 
+# flags.declare-module.summary
+
+Add declare module to the output file
+
+# flags.declare-module.description
+
+Add declare module to the output file
+
 # examples
 
 - Get all types:
@@ -61,15 +69,15 @@ Use this flag to ignore the case of SObject names
 
 - Get types for all sobjects that start with a specific prefix:
 
-  <%= config.bin %> <%= command.id %> --sobject "Acc\*"
+  <%= config.bin %> <%= command.id %> --sobject Acc\*
 
 - Get types for all sobjects that end with a specific suffix:
 
-  <%= config.bin %> <%= command.id %> --sobject "\*ct"
+  <%= config.bin %> <%= command.id %> --sobject \*ct
 
 - Get types for all sobjects that contain a specific substring:
 
-  <%= config.bin %> <%= command.id %> --sobject "_ct_"
+  <%= config.bin %> <%= command.id %> --sobject \*ct\*
 
 # info.hello
 

@@ -39,6 +39,11 @@ export default class Types extends SfCommand<HacerxTypesResult> {
       default: false,
     }),
     'target-org': Flags.requiredOrg(),
+    'declare-module': Flags.boolean({
+      summary: messages.getMessage('flags.declare-module.summary'),
+      description: messages.getMessage('flags.declare-module.description'),
+      default: false,
+    }),
   };
 
   public async run(): Promise<HacerxTypesResult> {
@@ -69,10 +74,17 @@ export default class Types extends SfCommand<HacerxTypesResult> {
     outputDir: string
   ): Promise<{ sobject: string; type: string }> {
     this.log(`Processing ${sobject}`);
+
+    const { flags } = await this.parse(Types);
     const description = await conn.describe(sobject);
-    const typed = generateTypes(description);
+
+    let typed = generateTypes(description);
+    if (flags['declare-module']) {
+      typed = `declare module '@salesforce/schema/${sobject}' { export const objectApiName: string; }\n${typed}`;
+    }
     const outputFile = normalize(`${outputDir}/${description.name}.d.ts`);
     await writeFile(outputFile, typed);
+
     this.log(`Processed ${sobject} - ${outputFile}`);
     return { sobject, type: typed };
   }
